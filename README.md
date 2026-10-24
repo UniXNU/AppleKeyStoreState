@@ -1,7 +1,7 @@
-# NativeKeyStoreEvents
+# AppleKeyStoreState
 
-AppleKeyStore state client. Handles keybag and lock-state events for the sheng port.
+AppleKeyStore state and selector handling.
 
-Current state: used with `sheng-aks=1`.
+used with `sheng-aks=1`.
 
-Linked into XNU by `unixnu build kernel`.
+Build and interface details: [documentation](https://unixnu.com/reference/components). Component sources and dependencies: [catalog](https://unixnu.com/reference/components).

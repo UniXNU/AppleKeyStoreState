@@ -36,6 +36,7 @@ constexpr uint32_t kStateFlags = 4;
 constexpr uint64_t kSystemHandle = 0;
 constexpr IOReturn kAksError = (IOReturn)0xe00002bc;   // what libaks reports itself when the connection is missing
 constexpr IOReturn kAksUnsupported = (IOReturn)0xe00002c7;
+constexpr IOReturn kAksNotFound = (IOReturn)0xe00002f0; // kIOReturnNotFound -> MobileKeyBag -8 (NotFound)
 
 // Self-contained so wrapping does not depend on when the kernel's crypto provider registers.
 class Sha256 {
@@ -255,6 +256,13 @@ public:
         case kSelDeviceState:
         case kSelExtendedDeviceState: {
             if (args->scalarInputCount > 1 || args->scalarOutputCount != 0) { rc = kIOReturnBadArgument; break; }
+            // Per-user macOS session keybags use negative uid handles (< -3; -3 is device_keybag_handle, 0 is system).
+            // No per-user SEP keybag exists here; return kIOReturnNotFound so MobileKeyBag reports NotFound (-8) and
+            // LocalAuthentication verifies macOS user passwords through OpenDirectory instead of a missing MKB bag.
+            if (args->scalarInputCount == 1 && args->scalarInput && (int32_t)args->scalarInput[0] < -3) {
+                rc = kAksNotFound;
+                break;
+            }
             uint8_t der[160];
             size_t n = native_aks_encode_state(der, sizeof der, native_aks_lock_state());
             if (!n) { rc = kIOReturnNoSpace; break; }

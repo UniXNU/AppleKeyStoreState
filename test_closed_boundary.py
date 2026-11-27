@@ -187,6 +187,12 @@ int main() {
             assert(client->externalMethod(sel, &small) == kIOReturnNoSpace);
             IOExternalMethodArguments bad{in, 1, outScalar, 1, buffer, sizeof buffer};
             assert(client->externalMethod(sel, &bad) == kIOReturnBadArgument);
+            // Device handle (-3) returns device state; per-user session handles (< -3, e.g. -501) do not exist.
+            uint64_t devBag[1] = {(uint64_t)(uint32_t)-3}, userBag[1] = {(uint64_t)(uint32_t)-501};
+            IOExternalMethodArguments devReq{devBag, 1, nullptr, 0, buffer, sizeof buffer};
+            assert(client->externalMethod(sel, &devReq) == kIOReturnSuccess);
+            IOExternalMethodArguments userReq{userBag, 1, nullptr, 0, buffer, sizeof buffer};
+            assert(client->externalMethod(sel, &userReq) == (IOReturn)0xe00002f0);
         }
     }
     // Everything else is unsupported (keys, bags, passcodes are not provided); a missing argument block is an error.
